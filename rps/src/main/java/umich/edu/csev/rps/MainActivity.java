@@ -76,7 +76,7 @@ public class MainActivity extends ActionBarActivity {
 
         View rootView;
 
-        public String urlString = "http://192.168.1.201:8888/mmorps";
+        public String urlString = "https://lti-tools.dr-chuck.com/mmorps";
         int serverHeight = -1;
         public String pairString = "";
         int pairHeight = -1;
@@ -87,15 +87,15 @@ public class MainActivity extends ActionBarActivity {
         Button settingsButton;
         ProgressBar spinner;
         TextView textStatus;
-        String statusStr = "You need pairing code to play";
+        String statusStr = "You need a pairing code to play";
         TextView textLeaders;
         String leadersStr;
 
         private Handler mHandler = new Handler();
         long mStartTime = 0L;
 
-        String rpsGuid = null;
-        long checkTime = -1;
+        String playGuid = null;
+        long playTime = -1;
         long leaderTime = 1;
 
         String EOL = System.getProperty("line.separator");
@@ -111,7 +111,8 @@ public class MainActivity extends ActionBarActivity {
                     Integer score = json.getJSONObject(i).getInt("score");
                     Integer games = json.getJSONObject(i).getInt("games");
                     leadersStr = leadersStr + " " + name + "(" + games + ")" + " score=" + score + EOL;
-                    System.out.println(leadersStr);
+                    // System.out.println(leadersStr);
+                    if ( i >= 15 ) break;
                 }
                 leaderTime = 15L;
             } catch (Exception e) {
@@ -124,17 +125,36 @@ public class MainActivity extends ActionBarActivity {
                 System.out.println("handlePlay ="+input);
                 JSONObject json = new JSONObject(input);
                 System.out.println("object="+json);
-                /*
-                leadersStr = "Leaderboard:"+EOL;
-                for(int i = 0 ; i < json.length(); i++){
-                    String name = json.getJSONObject(i).getString("name");
-                    Integer score = json.getJSONObject(i).getInt("score");
-                    Integer games = json.getJSONObject(i).getInt("games");
-                    leadersStr = leadersStr + " " + name + "(" + games + ")" + " score=" + score + EOL;
-                    System.out.println(leadersStr);
+
+                String error = json.has("error") ? json.getString("error") : null;
+                if ( error != null ) {
+                    statusStr = "Error: " + error;
+                    playGuid = null;
+                    playTime = -1;
+                    return;
                 }
-                leaderTime = 15L;
-                */
+
+                String guid = json.has("guid") ? json.getString("guid") : null;
+                System.out.println("guid="+guid);
+                if ( guid != null && guid.length() > 0 ) {
+                    playGuid = guid;
+                }
+
+                Boolean win = json.has("win") ? json.getBoolean("win") : null;
+                if ( win != null ) {
+                    Boolean tie = json.getBoolean("tie");
+                    String message = "You lost to ";
+                    if ( win ) message = "You beat ";
+                    if ( tie ) message = "You tied ";
+                    String displayname = json.getString("displayname");
+                    statusStr = message + displayname;
+                    playTime = -1;
+                    leaderTime = 2;
+                    return;
+                }
+                statusStr = "Waiting for another player";
+                playTime = 10;
+
             } catch (Exception e) {
                 System.out.println("Exception "+e.getMessage());
             }
@@ -183,7 +203,11 @@ public class MainActivity extends ActionBarActivity {
                 // System.out.println("onPostExecute\n"+leadersStr);
                 textLeaders.setText(leadersStr);
                 textStatus.setText(statusStr);
-                if ( checkTime < 1 ) {
+                // Starts shows the spinner and we hide it as soon as we are done
+                // If we are in a play-wait mode - we keep the spinner
+                if ( playTime > 1 ) {
+                    spinner.setVisibility(View.VISIBLE);
+                } else {
                     spinner.setVisibility(View.INVISIBLE);
                 }
             }
@@ -214,15 +238,22 @@ public class MainActivity extends ActionBarActivity {
                     textStatus.setText("" + minutes + ":" + seconds);
                 } */
 
-                if ( leaderTime > 0 ) leaderTime = leaderTime -1;
+                if ( playTime > 0 ) playTime = playTime - 1;
+                if ( playTime == 0 ) {
+                    spinner.setVisibility(View.VISIBLE);
+                    playTime = -1;
+                    String url = "play.php?game="+playGuid+"&pair="+pairString;
+                    System.out.println("Play re-check "+url);
+                    new MyGETJSON().execute("play.php?game="+playGuid+"&pair="+pairString);
+                }
+
+                if ( leaderTime > 0 ) leaderTime = leaderTime - 1;
                 if ( leaderTime == 0 ) {
                     spinner.setVisibility(View.VISIBLE);
                     leaderTime = -1;
-                    System.out.println("I AM TRIGGERED");
+                    System.out.println("Leaderboard check");
                     new MyGETJSON().execute("stats.php");
-                    System.out.println("Back");
                 }
-
 
                 mHandler.postAtTime(this,
                         start + (((minutes * 60) + seconds + 1) * 1000));
@@ -277,6 +308,12 @@ public class MainActivity extends ActionBarActivity {
                 public void afterTextChanged(Editable s) {
                     // System.out.println("pair onchange="+textPair.getText());
                     pairString = textPair.getText().toString();
+                    if ( pairString.length() > 0 ) {
+                        statusStr = "Ready to play...";
+                    } else {
+                        statusStr = "Pairing code is required...";
+                    }
+                    textStatus.setText(statusStr);
                 }
 
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -310,7 +347,7 @@ public class MainActivity extends ActionBarActivity {
             rockButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View arg0) {
-                    System.out.println("Rock CLicked");
+                    System.out.println("Rock Clicked");
                     doPlay(0, textServer, textPair);
                 }
             });

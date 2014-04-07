@@ -84,7 +84,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Medium Text"
+        android:text="You need a pairing code to play..."
         android:id="@+id/textStatus"
         android:layout_below="@+id/pairText"
         android:layout_alignParentLeft="true"
