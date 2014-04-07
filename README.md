@@ -13,8 +13,8 @@ after you lok in - go to the drop-down by your name and select
 "Pair with Mofile Device".  You can set or clear the pairing code.
 This code will need to be typed into youy Android application.
 
-Installing The Appication
--------------------------
+Installing The Application
+--------------------------
 
 A functioning install of git is a pre-requisite to this procedure.
 
@@ -38,8 +38,8 @@ need to create this by hand.
 
 Once the checkout completes you should open the project.   You might see 
 a very empty grey screen with words like "Open Project View with %1".  This
-happens becuase I don't check the .idea/workspace.xml file into git.  
-But don't worry - just do what it says to open the Project View and then start 
+happens becuase I don't check the .idea/workspace.xml file into git.  But 
+don't worry - just do what it says to open the Project View and then start 
 opening the files and soon Android Studio will look like it should.
 
 How the Application Works
@@ -57,8 +57,11 @@ emulator itself.  So you need to use a URL like these:
 You can use the idconfig command on Mac (and I think on Windows) to find your
 IP address of your workstation.
 
-Once you have the server URL, you enter the Pairing code and start playing.  
-There is extensive logging so you can watch what is going on in the console.
+Once you have the server URL, you enter the Pairing code and start 
+playing.  There is extensive logging so you can watch what is going on 
+in the console.  You can play against yourself in the Android
+application and in the browser to test.  You will rack up the game count but
+yur score will stay zero because you will both win and lose each game.
 
 As always, this is early days and comments are welcome.
 
